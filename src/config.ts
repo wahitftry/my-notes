@@ -1,12 +1,14 @@
 import type { Site, SocialObjects } from "./types";
 
 export const SITE: Site = {
-  website: "https://wahit.me/", // replace this with your deployed domain
+  website: "https://notes.wahit.me/", // replace this with your deployed domain
   author: "Wahit Fitriyanto",
-  desc: "Full Stack Developer From Indonesia",
-  title: "Wahit Fitriyanto",
+  profile: "https://wahit.me/",
+  desc: "Official Website Notes Of Wahit Fitriyanto",
+  title: "Wahit Notes",
   ogImage: "astropaper-og.jpg",
   lightAndDarkMode: true,
+  postPerIndex: 4,
   postPerPage: 3,
   scheduledPostMargin: 15 * 60 * 1000, // 15 minutes
 };
@@ -32,7 +34,7 @@ export const SOCIALS: SocialObjects = [
   },
   {
     name: "Facebook",
-    href: "https://www.facebook.com/wahidftry/",
+    href: "https://facebook.com/wahidftry",
     linkTitle: `${SITE.title} on Facebook`,
     active: true,
   },
@@ -44,19 +46,19 @@ export const SOCIALS: SocialObjects = [
   },
   {
     name: "LinkedIn",
-    href: "https://www.linkedin.com/id/wahit-fitriyanto/",
+    href: "https://www.linkedin.com/in/wahit-fitriyanto/",
     linkTitle: `${SITE.title} on LinkedIn`,
     active: true,
   },
   {
     name: "Mail",
-    href: "mailto:wahitfitriyanto@gmail.com",
+    href: "mailto:yourmail@gmail.com",
     linkTitle: `Send an email to ${SITE.title}`,
     active: false,
   },
   {
     name: "Twitter",
-    href: "https://twitter.com/wahidftry",
+    href: "https://github.com/satnaing/astro-paper",
     linkTitle: `${SITE.title} on Twitter`,
     active: false,
   },

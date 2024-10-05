@@ -33,7 +33,9 @@ export function remarkReadingTime() {
   return function (tree, { data }) {
     const textOnPage = toString(tree);
     const readingTime = getReadingTime(textOnPage);
-    data.astro.frontmatter.readingTime = readingTime.text;
+    // readingTime.text will give us minutes read as a friendly string,
+    // i.e. "3 min read"
+    data.astro.frontmatter.minutesRead = readingTime.text;
   };
 }
 ```
@@ -88,15 +90,19 @@ export const collections = { blog };
 Step (5) Create a new file called `getPostsWithRT.ts` under `src/utils` directory.
 
 ```ts
-import type { MarkdownInstance } from "astro";
 import type { CollectionEntry } from "astro:content";
 import { slugifyStr } from "./slugify";
 
+interface Frontmatter {
+  frontmatter: {
+    title: string;
+    minutesRead: string;
+  };
+}
+
 export const getReadingTime = async () => {
   // Get all posts using glob. This is to get the updated frontmatter
-  const globPosts = import.meta.glob("../content/blog/*.md") as Promise<
-    CollectionEntry<"blog">["data"][]
-  >;
+  const globPosts = import.meta.glob<Frontmatter>("../content/blog/*.md");
 
   // Then, set those frontmatter value in a JS Map with key value pair
   const mapFrontmatter = new Map();
@@ -106,7 +112,7 @@ export const getReadingTime = async () => {
       const { frontmatter } = await globPost();
       mapFrontmatter.set(
         slugifyStr(frontmatter.title),
-        frontmatter.readingTime
+        frontmatter.minutesRead
       );
     })
   );
@@ -125,7 +131,7 @@ const getPostsWithRT = async (posts: CollectionEntry<"blog">[]) => {
 export default getPostsWithRT;
 ```
 
-Step (6) Refactor `getStaticPaths` of `/src/pages/posts/[slug].astro` as the following
+Step (6) Refactor `getStaticPaths` of `/src/pages/posts/[slug]/index.astro` as the following
 
 ```ts
 ---
@@ -209,10 +215,10 @@ Step (2) Make sure to refactor every file which uses `getSortedPosts` function. 
 Files that use `getSortedPosts` function are as follow
 
 - src/pages/index.astro
-- src/pages/posts/index.astro
+- src/pages/search.astro
 - src/pages/rss.xml.ts
 - src/pages/posts/index.astro
-- src/pages/posts/[slug].astro
+- src/pages/posts/[slug]/index.astro
 - src/utils/getPostsByTag.ts
 
 All you have to do is like this
@@ -220,6 +226,41 @@ All you have to do is like this
 ```ts
 const sortedPosts = getSortedPosts(posts); // old code ❌
 const sortedPosts = await getSortedPosts(posts); // new code ✅
+```
+
+Now, `getPostsByTag` function becomes an async function. Therefore, we needs to `await` the `getPostsByTag` function too.
+
+- src/pages/tags/[tag]/[page].astro
+- src/pages/tags/[tag]/index.astro
+
+```ts
+const postsByTag = getPostsByTag(posts, tag); // old code ❌
+const postsByTag = await getPostsByTag(posts, tag); // new code ✅
+```
+
+Moreover, update the `getStaticPaths` of `src/pages/tags/[tag]/[page].astro` like this:
+
+```ts
+export async function getStaticPaths() {
+  const posts = await getCollection("blog");
+
+  const tags = getUniqueTags(posts);
+
+  // Make sure to await the promises
+  const paths = await Promise.all(
+    tags.map(async ({ tag, tagName }) => {
+      const tagPosts = await getPostsByTag(posts, tag);
+      const totalPages = getPageNumbers(tagPosts.length);
+
+      return totalPages.map(page => ({
+        params: { tag, page: String(page) },
+        props: { tag, tagName },
+      }));
+    })
+  );
+
+  return paths.flat(); // Flatten the array of arrays
+}
 ```
 
 Now you can access `readingTime` in other places besides `PostDetails`
